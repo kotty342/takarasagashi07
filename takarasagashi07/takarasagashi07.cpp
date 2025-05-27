@@ -1,5 +1,12 @@
 ﻿#include <stdio.h> // 標準入出力ライブラリのインクルード
 
+// プロトタイプ宣言
+void print_board(int input_col, int input_row);
+int is_valid_position(int col, int row);
+int check_get_treasure(int input_col, int input_row);
+void show_board_or_error(int valid, int input_col, int input_row);
+void show_result_message(int found);
+
 // 定数定義
 #define TRE_COUNT 10    // 宝物の数
 #define MAX_TRIES 20    // 最大試行回数
