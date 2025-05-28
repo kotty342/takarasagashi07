@@ -1,73 +1,117 @@
 ﻿#include <stdio.h> // 標準入出力ライブラリのインクルード
 
-// プロトタイプ宣言
-void print_board(int input_col, int input_row);
-int is_valid_position(int col, int row);
-int check_get_treasure(int input_col, int input_row);
-void show_board_or_error(int valid, int input_col, int input_row);
-void show_result_message(int found);
-
 // 定数定義
-#define TRE_COUNT 10    // 宝物の数
-#define MAX_TRIES 20    // 最大試行回数
-#define GRID_SIZE 10    // 盤面のサイズ
+constexpr auto MAX_TRIES = 20;     // 最大試行回数
+constexpr auto GRID_SIZE = 10;     // 盤面のサイズ
+constexpr auto TRE_COUNT = 10;     // 宝物の数
 
 // 宝物の座標
-int tre_x[TRE_COUNT] = {5, 3, 0, 5, 1, 2, 4, 0, 3, 2};
-int tre_y[TRE_COUNT] = {8, 9, 5, 9, 7, 8, 6, 1, 7, 5};
-// 取得判定フラグ
+const int tre_x[TRE_COUNT] = {5, 3, 0, 5, 1, 2, 4, 0, 3, 2};
+const int tre_y[TRE_COUNT] = {8, 9, 5, 9, 7, 8, 6, 1, 7, 5};
+
+// 取得済み判定用フラグ
 int get_comp[TRE_COUNT] = {0};
 
-// 盤面を表示する関数
-void print_board(int input_col, int input_row) {
-    printf("   "); // 列番号の前のスペースを表示
-    for (int col = 0; col < GRID_SIZE; col++) { // 列番号を0から9まで表示
-        printf("%2d", col); // 列番号を2桁で表示
-    }
-    printf("\n"); // 列番号表示後に改行
-    for (int row = 0; row < GRID_SIZE; row++) { // 各行を表示
-        printf("%2d ", row); // 行番号を2桁で表示
-        for (int col = 0; col < GRID_SIZE; col++) { // 各列を表示
-            if (col == input_col && row == input_row) { // 入力座標と一致する場合
-                printf("■ "); // プレイヤーの入力位置を強調表示
-            }
-            else {
-                printf("□ "); // それ以外は通常のマスを表示
+// プロトタイプ宣言
+int is_valid_position(int x, int y); // 入力座標の妥当性判定関数のプロトタイプ
+int check_get_treasure(int input_x, int input_y, const int tre_x[], const int tre_y[], int get_comp[]); // 宝物取得判定関数のプロトタイプ
+void show_board_or_error(int input_error, int input_x, int input_y); // 盤面表示またはエラー表示関数のプロトタイプ
+void show_result_message(int get_treasure); // 判定結果表示関数のプロトタイプ
+int is_game_end(int game_count, int score); // ゲーム終了判定関数のプロトタイプ
+void show_score(int score); // スコア表示関数のプロトタイプ
+
+int main() {
+    int input_x = 0, input_y = 0; // プレイヤーが入力する列・行
+    int score = 0; // スコア
+    int game_count = 0; // 試行回数
+
+    while (!is_game_end(game_count, score)) { // ゲーム終了条件を満たすまで繰り返す
+        printf("[%d回目] 座標を入力してください。\n", game_count + 1); // 試行回数を表示
+        printf("列 = ");
+        scanf_s("%d", &input_x);
+        printf("行 = ");
+        scanf_s("%d", &input_y);
+
+        int input_error = is_valid_position(input_x, input_y); // 入力値の妥当性を判定
+        int get_treasure = 0;
+
+        if (input_error) { // 妥当な入力の場合
+            // 宝物判定
+            get_treasure = check_get_treasure(input_x, input_y, tre_x, tre_y, get_comp);
+            if (get_treasure) {
+                score++; // スコアを加算
             }
         }
-        printf("\n"); // 行の終わりで改行
+
+        show_board_or_error(input_error, input_x, input_y); // 盤面またはエラー表示
+
+        show_result_message(get_treasure); // 判定結果を表示
+
+        game_count++;
     }
+
+    show_score(score); // スコアを表示
+
+    return 0;
 }
 
 // 関数1: 入力座標の妥当性判定
-int is_valid_position(int col, int row) {
-    return (col >= 0 && col < GRID_SIZE && row >= 0 && row < GRID_SIZE); // 0以上9以下なら妥当
+int is_valid_position(int x, int y) {
+    if (x < 0 || x >= GRID_SIZE) {
+        return 0;
+    }
+    if (y < 0 || y >= GRID_SIZE) {
+        return 0;
+    }
+    return 1;
 }
 
-// 関数2: 宝物発見判定（未取得の宝物のみ）
-int check_get_treasure(int input_col, int input_row) {
+// 関数2: 宝物取得判定（未取得のみスコア加算）
+int check_get_treasure(int input_x, int input_y, const int tre_x[], const int tre_y[], int get_comp[]) {
     for (int i = 0; i < TRE_COUNT; i++) {
-        if (!get_comp[i] && input_col == tre_x[i] && input_row == tre_y[i]) {
-            get_comp[i] = 1; // 取得済みにする
-            return 1;
+        if (input_x == tre_x[i] && input_y == tre_y[i]) {
+            if (get_comp[i] == 0) { // 未取得の場合
+                get_comp[i] = 1; // 取得済みに設定
+                return 1; // 新規取得
+            } else {
+                return 0; // 既取得
+            }
         }
     }
     return 0;
 }
 
-// 関数3: 受理なら盤面表示、NGならエラーメッセージ表示
-void show_board_or_error(int valid, int input_col, int input_row) {
-    if (valid) { // 妥当な入力なら
-        print_board(input_col, input_row); // 盤面を表示
+// 関数3: エラーフラグに応じて盤面表示またはエラーメッセージを表示
+// エラー時はエラーメッセージのみ表示
+void show_board_or_error(int input_error, int input_x, int input_y) {
+    if (input_error) {
+        // 盤面を表示
+        printf("   ");
+        for (int col = 0; col < GRID_SIZE; col++) {
+            printf("%2d", col);
+        }
+        printf("\n");
+        for (int row = 0; row < GRID_SIZE; row++) {
+            printf("%2d ", row);
+            for (int col = 0; col < GRID_SIZE; col++) {
+                if (col == input_x && row == input_y) {
+                    printf("■ ");
+                }
+                else {
+                    printf("□ ");
+                }
+            }
+            printf("\n");
+        }
     }
     else {
-        printf("エラー：範囲外の入力です。\n"); // エラーメッセージを表示
+        printf("エラー：範囲外の入力です。(0から%dの間で入力してください)\n", GRID_SIZE - 1); // エラーメッセージのみ表示
     }
 }
 
 // 関数4: 一致判定結果に応じて「はずれ」「あたり」表示
-void show_result_message(int found) {
-    if (found) { // 宝物を発見した場合
+void show_result_message(int get_treasure) {
+    if (get_treasure) { // 宝物を発見した場合
         printf("あたり！\n"); // 当たりメッセージ
     }
     else {
@@ -75,37 +119,19 @@ void show_result_message(int found) {
     }
 }
 
-int main() {
-    int input_col, input_row; // プレイヤーが入力する列・行
-    int tries = 0; // 試行回数カウンタ
-    int score = 0; // スコア（発見した宝物の数）
-
-    while (tries < MAX_TRIES && score < TRE_COUNT) { // 最大試行回数または全宝物発見で終了
-        printf("[%d回目] 座標を入力してください。\n", tries + 1); // 試行回数を表示
-        printf("列 = "); // 列入力を促す
-        scanf_s("%d", &input_col); // 列番号の入力
-        printf("行 = "); // 行入力を促す
-        scanf_s("%d", &input_row); // 行番号の入力
-
-        int valid = is_valid_position(input_col, input_row); // 入力値の妥当性を判定
-        int get_treasure = 0; // 宝物発見フラグ
-        if (valid) { // 妥当な入力の場合
-            get_treasure = check_get_treasure(input_col, input_row); // 宝物発見判定
-            if (get_treasure) { // 宝物を発見した場合
-                score++; // スコアをインクリメント
-            }
-        }
-
-        show_board_or_error(valid, input_col, input_row); // 盤面またはエラー表示
-
-        if (valid) { // 妥当な入力の場合
-            show_result_message(get_treasure); // 判定結果を表示
-        }
-
-        tries++; // 試行回数をインクリメント
+// 関数5: ゲーム終了判定
+int is_game_end(int game_count, int score) {
+    if (game_count >= MAX_TRIES) {
+        return 1;
     }
-
-    printf("スコア: %d\n", score); // 最終スコアを表示
-
-    return 0; // プログラム終了
+    if (score >= TRE_COUNT) {
+        return 1;
+    }
+    return 0;
 }
+
+// 関数6: スコア表示
+void show_score(int score) {
+    printf("スコア: %d\n", score);
+}
+
