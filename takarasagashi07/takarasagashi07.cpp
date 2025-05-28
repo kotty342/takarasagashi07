@@ -17,7 +17,7 @@ int is_valid_position(int x, int y); // 入力座標の妥当性判定関数の�
 int check_get_treasure(int input_x, int input_y, const int tre_x[], const int tre_y[], int get_comp[]); // 宝物取得判定関数のプロトタイプ
 void show_board_or_error(int input_error, int input_x, int input_y); // 盤面表示またはエラー表示関数のプロトタイプ
 void show_result_message(int get_treasure); // 判定結果表示関数のプロトタイプ
-int is_game_end(int game_count, int score); // ゲーム終了判定関数のプロトタイプ
+int is_game_end(int game_count); // ゲーム終了判定関数のプロトタイプ
 void show_score(int score); // スコア表示関数のプロトタイプ
 
 int main() {
@@ -25,7 +25,7 @@ int main() {
     int score = 0; // スコア
     int game_count = 0; // 試行回数
 
-    while (!is_game_end(game_count, score)) { // ゲーム終了条件を満たすまで繰り返す
+    while (!is_game_end(game_count)) { // ゲーム終了条件を満たすまで繰り返す
         printf("[%d回目] 座標を入力してください。\n", game_count + 1); // 試行回数を表示
         printf("列 = ");
         scanf_s("%d", &input_x);
@@ -120,11 +120,8 @@ void show_result_message(int get_treasure) {
 }
 
 // 関数5: ゲーム終了判定
-int is_game_end(int game_count, int score) {
+int is_game_end(int game_count) {
     if (game_count >= MAX_TRIES) {
-        return 1;
-    }
-    if (score >= TRE_COUNT) {
         return 1;
     }
     return 0;
